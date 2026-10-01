@@ -82,7 +82,7 @@ describe('ZenMoneyApi', () => {
       fetch: async (input) => {
         const url = String(input);
         calls.push(url);
-        return url.startsWith('https://ru.example') ? new Response('Unauthorized', { status: 401 }) : ok({ serverTimestamp: 1 });
+        return new URL(url).origin === 'https://ru.example' ? new Response('Unauthorized', { status: 401 }) : ok({ serverTimestamp: 1 });
       },
     });
     await api.diff({ serverTimestamp: 0 }, { timeoutMs: 1000 });
