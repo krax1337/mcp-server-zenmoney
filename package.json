@@ -1,0 +1,52 @@
+{
+  "name": "mcp-server-zenmoney",
+  "version": "1.0.0",
+  "mcpName": "io.github.krax1337/mcp-server-zenmoney",
+  "description": "MCP server for ZenMoney (Дзен-мани): accounts, transactions, categories, budgets, reports, debts and planned operations over the official diff API",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "zenmoney",
+    "zerro",
+    "personal-finance"
+  ],
+  "license": "MIT",
+  "author": "Asanali Bulatov",
+  "homepage": "https://github.com/krax1337/mcp-server-zenmoney#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/krax1337/mcp-server-zenmoney.git"
+  },
+  "bugs": "https://github.com/krax1337/mcp-server-zenmoney/issues",
+  "type": "module",
+  "bin": {
+    "mcp-server-zenmoney": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "start": "node dist/index.js",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/node": "^2.1.0",
+    "@modelcontextprotocol/server": "^2.2.0",
+    "hono": "^4.13.12",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "^2.2.0",
+    "@types/node": "^26.6.3",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.krax1337/mcp-server-zenmoney",
+  "title": "ZenMoney",
+  "description": "ZenMoney (Дзен-мани) personal finance: accounts, transactions, reports, budgets, debts, planned operations.",
+  "repository": {
+    "url": "https://github.com/krax1337/mcp-server-zenmoney",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "mcp-server-zenmoney",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ZENMONEY_TOKEN",
+          "description": "ZenMoney API token, e.g. from https://zerro.app/token",
+          "isRequired": true,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "ZENMONEY_READ_ONLY",
+          "description": "Set to true to expose only read tools",
+          "isRequired": false,
+          "format": "boolean"
+        }
+      ]
+    }
+  ]
+}
