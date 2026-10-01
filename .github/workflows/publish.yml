@@ -1,10 +1,13 @@
 name: Publish
 
-# Push a tag like v1.0.0 (matching package.json and server.json versions) to release
-# to npm and the official MCP Registry. Requires the NPM_TOKEN repository secret.
+# Push a tag like v1.0.0 (matching package.json and server.json versions) to release to npm
+# and the official MCP Registry. npm auth uses Trusted Publishing (OIDC): no token secret.
+# Run manually (workflow_dispatch) to (re)publish the current version to the MCP Registry;
+# an already published npm version is skipped.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions: {}
 
@@ -12,7 +15,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # npm provenance + MCP Registry GitHub OIDC login
+      id-token: write # npm trusted publishing + provenance, MCP Registry GitHub OIDC login
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -23,17 +26,21 @@ jobs:
           node-version: 24
           registry-url: https://registry.npmjs.org
       - run: npm ci
-      - name: Check tag matches versions
+      - name: Check versions
+        id: version
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          test "$TAG" = "$(node -p "require('./package.json').version")"
-          test "$TAG" = "$(node -p "require('./server.json').version")"
+          VERSION="$(node -p "require('./package.json').version")"
+          test "$VERSION" = "$(node -p "require('./server.json').version")"
+          if [ "$GITHUB_REF_TYPE" = tag ]; then test "${GITHUB_REF_NAME#v}" = "$VERSION"; fi
+          if npm view "mcp-server-zenmoney@$VERSION" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          fi
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
       - run: npm test
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm
+        if: steps.version.outputs.published != 'true'
+        run: npm publish --provenance --access public
       - name: Install mcp-publisher
         run: |
           curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
