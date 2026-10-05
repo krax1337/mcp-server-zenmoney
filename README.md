@@ -1,5 +1,6 @@
 # mcp-server-zenmoney
 
+[![AgentHub 已收录：ZenMoney](https://myagenthub.cn/badge/io.github.krax1337/mcp-server-zenmoney)](https://myagenthub.cn/p/io.github.krax1337/mcp-server-zenmoney)
 [![CI](https://github.com/krax1337/mcp-server-zenmoney/actions/workflows/ci.yml/badge.svg)](https://github.com/krax1337/mcp-server-zenmoney/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/mcp-server-zenmoney)](https://www.npmjs.com/package/mcp-server-zenmoney)
 
