@@ -1,6 +1,6 @@
 {
   "name": "mcp-server-zenmoney",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mcpName": "io.github.krax1337/mcp-server-zenmoney",
   "description": "MCP server for ZenMoney (Дзен-мани): accounts, transactions, categories, budgets, reports, debts and planned operations over the official diff API",
   "keywords": [
@@ -38,10 +38,10 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@modelcontextprotocol/node": "^2.1.0",
-    "@modelcontextprotocol/server": "^2.2.0",
-    "hono": "^4.13.12",
-    "zod": "^4.6.5"
+    "@modelcontextprotocol/node": "^2.1.1",
+    "@modelcontextprotocol/server": "^2.3.1",
+    "hono": "^4.13.13",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "^2.2.0",
