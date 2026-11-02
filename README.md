@@ -1,33 +1,91 @@
-# mcp-server-zenmoney
+<div align="center">
+
+# 💸 ZenMoney MCP
+
+**Talk to your money.** Let Claude, Cursor, Codex or any MCP agent read, analyze and update your [ZenMoney](https://zenmoney.app) (Дзен-мани) finances in plain language.
 
 [![CI](https://github.com/krax1337/mcp-server-zenmoney/actions/workflows/ci.yml/badge.svg)](https://github.com/krax1337/mcp-server-zenmoney/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/mcp-server-zenmoney)](https://www.npmjs.com/package/mcp-server-zenmoney)
+[![MCP Registry](https://img.shields.io/badge/MCP%20Registry-io.github.krax1337%2Fmcp--server--zenmoney-blue)](https://registry.modelcontextprotocol.io)
+[![Node](https://img.shields.io/node/v/mcp-server-zenmoney)](package.json)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-MCP server for [ZenMoney](https://zenmoney.app) (Дзен-мани). It gives an AI agent access to your accounts and balances, lets it search transactions and build reports, read and set monthly budgets, see planned (recurring) operations and debts, categorize spending, and record or edit transactions with safety rails. It talks to the official ZenMoney API v8 (`POST /v8/diff/` sync protocol and `POST /v8/suggest/`) using an OAuth token, e.g. one issued through [Zerro](https://zerro.app).
+[![Install in Cursor](https://img.shields.io/badge/Cursor-Install%20MCP-000000?logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=zenmoney&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsIm1jcC1zZXJ2ZXItemVubW9uZXkiXSwiZW52Ijp7IlpFTk1PTkVZX1RPS0VOIjoiWU9VUl9UT0tFTiJ9fQ==)
+[![Install in VS Code](https://img.shields.io/badge/VS%20Code-Install%20MCP-0098FF?logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect/mcp/install?name=zenmoney&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22zenmoney_token%22%2C%22description%22%3A%22ZenMoney%20token%20from%20https%3A%2F%2Fzerro.app%2Ftoken%22%2C%22password%22%3Atrue%7D%5D&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22mcp-server-zenmoney%22%5D%2C%22env%22%3A%7B%22ZENMONEY_TOKEN%22%3A%22%24%7Binput%3Azenmoney_token%7D%22%7D%7D)
 
-Unofficial project, not affiliated with ZenMoney or Zerro. Your token and data stay on your machine.
+</div>
 
-## Quick start
+*Example conversation:*
+
+> **You:** How did October go? Anything unusual compared to September?
+>
+> **Agent:** *calls `summarize_transactions`, `get_budget`* → Restaurants went 40% over budget, mostly in the last week. Taxi doubled after you started commuting by Yandex Go. Groceries were flat. Want me to raise the Restaurants budget for November or set up a category for the commute?
+
+## ✨ Why
+
+- 🔍 **Ask anything.** Balances, net worth, where the money went, budget status, who owes whom, what's due next week.
+- ✍️ **Record by talking.** "Magnum 12 450 KZT from Kaspi Gold, groceries." Categories are filled in from your history, and duplicates trigger a warning.
+- 📊 **Budgets and reviews.** Built-in `monthly_review`, `categorize_transactions` and `plan_budget` workflows.
+- 🛡️ **Safe by default.** Read-only mode, `dry_run` previews, soft deletes with restore, confirmation hints on destructive tools.
+- 🔒 **Private.** Runs on your machine and talks only to the official ZenMoney API. Your token never touches disk.
+
+Unofficial project, not affiliated with ZenMoney or Zerro.
+
+## 🪄 Install with one prompt
+
+Paste this into your coding agent (Claude Code, Codex, Cursor, omp, …):
+
+```text
+Install the ZenMoney MCP server for me: https://github.com/krax1337/mcp-server-zenmoney
+Follow the "Agent setup guide" in its README.
+```
+
+The agent checks Node, has you save the token to a private file (it never asks you to paste the token into chat), verifies it, and registers the server in its own config.
+
+<details>
+<summary><b>🤖 Agent setup guide</b> (instructions for the AI agent doing the install)</summary>
+
+1. Check that `node --version` is 22 or newer. If it isn't, stop and tell the user.
+2. Ask the user to open https://zerro.app/token, log in with their ZenMoney account and save the token **themselves** with:
+   ```sh
+   mkdir -p ~/.config && umask 077 && printf '%s' 'PASTE_TOKEN_HERE' > ~/.config/zenmoney-token
+   ```
+   Do not ask for the token in chat, and do not write it into any config file.
+3. Verify the token:
+   ```sh
+   ZENMONEY_TOKEN_FILE=~/.config/zenmoney-token npx -y mcp-server-zenmoney --check
+   ```
+   Expect `OK: <login>, main currency …`. On exit code 1, show the user the reason and stop.
+4. Ask the user whether the agent may change their data or should be read-only. For read-only, add `"ZENMONEY_READ_ONLY": "true"` to `env` (or `-e ZENMONEY_READ_ONLY=true` for Claude Code).
+5. Register the server in your own MCP config, using the absolute path of the token file:
+   - Claude Code: `claude mcp add zenmoney -e ZENMONEY_TOKEN_FILE=$HOME/.config/zenmoney-token -- npx -y mcp-server-zenmoney`
+   - Clients with an `mcpServers` JSON file (Claude Desktop, Cursor, omp, …):
+     ```json
+     "zenmoney": {
+       "command": "npx",
+       "args": ["-y", "mcp-server-zenmoney"],
+       "env": { "ZENMONEY_TOKEN_FILE": "/home/<user>/.config/zenmoney-token" }
+     }
+     ```
+6. Tell the user to restart or reload MCP servers, then try: "Give me an overview of my finances."
+
+</details>
+
+## 🚀 Manual install
 
 Requirements: Node.js >= 22.
 
-1. Get a token: open https://zerro.app/token, log in with your ZenMoney account and copy the token shown.
-2. Verify it: `ZENMONEY_TOKEN=... npx -y mcp-server-zenmoney --check` prints `OK: <login>, main currency …, N active accounts, M transactions` (exit code 1 with the reason otherwise).
-3. Add the server to your agent (below).
+1. **Get a token:** open https://zerro.app/token, log in with your ZenMoney account and copy the token.
+2. **Check it:** `ZENMONEY_TOKEN=... npx -y mcp-server-zenmoney --check` prints `OK: <login>, main currency …, N active accounts, M transactions` (exit code 1 with the reason otherwise).
+3. **Add it to your agent:**
 
-Without a token the server still starts; every tool then explains how to configure one.
-
-## Connect to an agent (stdio)
-
-### Claude Code
+**Claude Code**
 
 ```sh
 claude mcp add zenmoney -e ZENMONEY_TOKEN=YOUR_TOKEN -- npx -y mcp-server-zenmoney
 ```
 
-### Claude Desktop / Cursor / most MCP clients
-
-`claude_desktop_config.json`, `~/.cursor/mcp.json`, …:
+**Claude Desktop / Cursor / most MCP clients** (`claude_desktop_config.json`, `~/.cursor/mcp.json`, …)
 
 ```json
 {
@@ -41,9 +99,7 @@ claude mcp add zenmoney -e ZENMONEY_TOKEN=YOUR_TOKEN -- npx -y mcp-server-zenmon
 }
 ```
 
-### omp
-
-User-wide config `~/.omp/agent/mcp.json` (or per project `.omp/mcp.json`), inside `mcpServers`:
+**omp**: user-wide config `~/.omp/agent/mcp.json` (or per project `.omp/mcp.json`), inside `mcpServers`:
 
 ```json
 "zenmoney": {
@@ -56,13 +112,15 @@ User-wide config `~/.omp/agent/mcp.json` (or per project `.omp/mcp.json`), insid
 
 omp expands `${VAR}` placeholders, so the token can stay in your shell environment. Then `/mcp reload`.
 
+Without a token the server still starts, and every tool explains how to configure one.
+
 ### Keeping the token out of config files
 
 ```sh
 umask 077 && printf '%s' 'YOUR_TOKEN' > ~/.config/zenmoney-token
 ```
 
-and use `"env": { "ZENMONEY_TOKEN_FILE": "~/.config/zenmoney-token" }` instead of `ZENMONEY_TOKEN`.
+Then use `"env": { "ZENMONEY_TOKEN_FILE": "~/.config/zenmoney-token" }` instead of `ZENMONEY_TOKEN`.
 
 ### Read-only
 
@@ -78,29 +136,19 @@ ZENMONEY_TOKEN=... npx -y mcp-server-zenmoney --http --port 3000
 - Default bind is `127.0.0.1`. Loopback binds (`127.0.0.1`, `localhost`, `::1`) apply Host/Origin validation against DNS rebinding.
 - Any other `--host` / `MCP_HTTP_HOST` is refused unless `MCP_HTTP_TOKEN` is set. When set (on any bind), clients must send `Authorization: Bearer <MCP_HTTP_TOKEN>`, otherwise they get 401. It is a single-user server: whoever has that token has your ZenMoney access, so keep it on a private network.
 
-## Configuration
+## 💬 Things to ask
 
-| Variable / flag | Default | Meaning |
-| --- | --- | --- |
-| `ZENMONEY_TOKEN` | — | ZenMoney API token from https://zerro.app/token |
-| `ZENMONEY_TOKEN_FILE` | — | File containing the token (used when `ZENMONEY_TOKEN` is empty; `~` expanded) |
-| `ZENMONEY_READ_ONLY` / `--read-only` | `false` | `1`/`true`/`yes`/`on` registers only read tools |
-| `ZENMONEY_SYNC_TTL` | `30` | Seconds before data is re-synced on the next tool call |
-| `ZENMONEY_CACHE_DIR` | `$XDG_CACHE_HOME/mcp-server-zenmoney`, else `~/.cache/mcp-server-zenmoney` | Snapshot cache directory |
-| `ZENMONEY_CACHE` | on | `0`/`false`/`no`/`off` keeps data in memory only |
-| `ZENMONEY_API_URL` | `https://api.zenmoney.ru`, fallback `https://api.zenmoney.app` | Pin a single API origin |
-| `MCP_TRANSPORT` / `--http` | `stdio` | `http` serves Streamable HTTP |
-| `MCP_HTTP_HOST` / `--host` | `127.0.0.1` | HTTP bind address |
-| `MCP_HTTP_PORT` / `--port` | `3000` | HTTP port |
-| `MCP_HTTP_TOKEN` | — | Bearer token HTTP clients must send; required for non-loopback binds |
-| `--check` | — | Sync once with the configured token, print a one-line summary and exit |
-| `--help`, `-h` / `--version`, `-v` | — | Print usage / version |
+- "How did October go? Biggest categories and anything unusual compared to September."
+- "Add: Magnum 12 450 KZT today from Kaspi Gold, groceries."
+- "Recategorize all Yandex Go rides from last month to Transport / Taxi."
+- "Copy this month's budgets to next month, but raise Restaurants to 80 000."
+- "Who owes me money, and how much in total?"
+- "What payments are scheduled for the next two weeks?"
+- "My cash wallet actually has 23 000; fix the balance."
 
-CLI flags take precedence over the corresponding environment variables.
+## 🧰 Tools
 
-## Tools
-
-Read tools (always registered, annotated `readOnlyHint`):
+**Read** (always registered, annotated `readOnlyHint`):
 
 | Tool | Purpose |
 | --- | --- |
@@ -116,7 +164,7 @@ Read tools (always registered, annotated `readOnlyHint`):
 | `suggest_category` | Category/merchant suggestions for payee names from ZenMoney and your own history |
 | `sync` | Pull changes from ZenMoney now; `full=true` re-downloads everything |
 
-Write tools (not registered in read-only mode):
+**Write** (not registered in read-only mode):
 
 | Tool | Purpose |
 | --- | --- |
@@ -146,9 +194,41 @@ Clients that support MCP prompts (e.g. as slash commands) get three workflows th
 | `categorize_transactions` | `period` | Proposes categories for uncategorized transactions, applies after confirmation (dry run first) |
 | `plan_budget` | `month` (YYYY-MM) | Proposes budgets from the last three months and planned payments, applies with `set_budgets` after confirmation |
 
-## Conventions
+## 🔒 Data, privacy and sync
 
-These are also sent to the agent as server instructions.
+- The server keeps a local replica of your ZenMoney database, synced through the official API v8 (`POST /v8/diff/`, plus `POST /v8/suggest/` for categories): a full download on first use, incremental diffs afterwards. Data older than `ZENMONEY_SYNC_TTL` seconds is refreshed automatically before a tool runs; `sync` forces it.
+- The replica is persisted to `<cache dir>/snapshot-<hash>.json` (directory created `0700`, file `0600`). The filename is a hash of token and API origin; the token itself is never written to disk. The snapshot does contain your financial data. Set `ZENMONEY_CACHE=off` to keep everything in memory.
+- API origin: `https://api.zenmoney.ru` first; if it rejects the token before any request has succeeded, `https://api.zenmoney.app` is tried. `ZENMONEY_API_URL` pins a single origin.
+- HTTP 401 from ZenMoney means the token is no longer valid: get a fresh one at https://zerro.app/token.
+- "Today" and default dates use the process time zone; set `TZ` (e.g. `TZ=Asia/Almaty`) in the server's `env` if the agent host runs in a different zone.
+- Snapshots of tokens you no longer use stay in the cache directory; delete old `snapshot-*.json` files after rotating a token.
+- Logs go to stderr only.
+
+<details>
+<summary><b>⚙️ Configuration</b></summary>
+
+| Variable / flag | Default | Meaning |
+| --- | --- | --- |
+| `ZENMONEY_TOKEN` | — | ZenMoney API token from https://zerro.app/token |
+| `ZENMONEY_TOKEN_FILE` | — | File containing the token (used when `ZENMONEY_TOKEN` is empty; `~` expanded) |
+| `ZENMONEY_READ_ONLY` / `--read-only` | `false` | `1`/`true`/`yes`/`on` registers only read tools |
+| `ZENMONEY_SYNC_TTL` | `30` | Seconds before data is re-synced on the next tool call |
+| `ZENMONEY_CACHE_DIR` | `$XDG_CACHE_HOME/mcp-server-zenmoney`, else `~/.cache/mcp-server-zenmoney` | Snapshot cache directory |
+| `ZENMONEY_CACHE` | on | `0`/`false`/`no`/`off` keeps data in memory only |
+| `ZENMONEY_API_URL` | `https://api.zenmoney.ru`, fallback `https://api.zenmoney.app` | Pin a single API origin |
+| `MCP_TRANSPORT` / `--http` | `stdio` | `http` serves Streamable HTTP |
+| `MCP_HTTP_HOST` / `--host` | `127.0.0.1` | HTTP bind address |
+| `MCP_HTTP_PORT` / `--port` | `3000` | HTTP port |
+| `MCP_HTTP_TOKEN` | — | Bearer token HTTP clients must send; required for non-loopback binds |
+| `--check` | — | Sync once with the configured token, print a one-line summary and exit |
+| `--help`, `-h` / `--version`, `-v` | — | Print usage / version |
+
+CLI flags take precedence over the corresponding environment variables.
+
+</details>
+
+<details>
+<summary><b>📐 Conventions</b> (also sent to the agent as server instructions)</summary>
 
 - Amounts are always positive; `type` gives the direction: `expense`, `income`, `transfer` (between own accounts), `debt_out` (money given to a person: lending or repaying), `debt_in` (money received: borrowing or being repaid).
 - Accounts and categories are referenced by name (case- and emoji-insensitive, unique substrings work), `"Parent / Child"` category paths, or ids. Accounts can also be referenced by card last digits (4+).
@@ -163,27 +243,9 @@ These are also sent to the agent as server instructions.
 - Budgets: `set_budgets` sets an exact amount (lock on); `0` removes the budget. Budgets without the lock (set in the app) also include the month's planned operations, as in ZenMoney. The profile's month start day is honored. Rollover between months is not modelled.
 - Zerro's hidden `🤖 [Zerro Data]` account and the reminders attached to it are ignored everywhere.
 
-## Example prompts
+</details>
 
-- "How did October go? Biggest categories and anything unusual compared to September."
-- "Add: Magnum 12 450 KZT today from Kaspi Gold, groceries."
-- "Recategorize all Yandex Go rides from last month to Transport / Taxi."
-- "Copy this month's budgets to next month, but raise Restaurants to 80 000."
-- "Who owes me money, and how much in total?"
-- "What payments are scheduled for the next two weeks?"
-- "My cash wallet actually has 23 000; fix the balance."
-
-## Data, privacy and sync
-
-- The server keeps a local replica of your ZenMoney database synced via `/v8/diff/`: a full download on first use, incremental diffs afterwards. Data older than `ZENMONEY_SYNC_TTL` seconds is refreshed automatically before a tool runs; `sync` forces it.
-- The replica is persisted to `<cache dir>/snapshot-<hash>.json` (directory created `0700`, file `0600`). The filename is a hash of token and API origin; the token itself is never written to disk. The snapshot does contain your financial data. Set `ZENMONEY_CACHE=off` to keep everything in memory.
-- API origin: `https://api.zenmoney.ru` first; if it rejects the token before any request has succeeded, `https://api.zenmoney.app` is tried. `ZENMONEY_API_URL` pins a single origin.
-- HTTP 401 from ZenMoney means the token is no longer valid: get a fresh one at https://zerro.app/token.
-- "Today" and default dates use the process time zone; set `TZ` (e.g. `TZ=Asia/Almaty`) in the server's `env` if the agent host runs in a different zone.
-- Snapshots of tokens you no longer use stay in the cache directory; delete old `snapshot-*.json` files after rotating a token.
-- Logs go to stderr only.
-
-## Limitations
+## ⚠️ Limitations
 
 - Planned (recurring) operations can be read but not created or edited.
 - Loan and deposit accounts cannot be created; bank-synced accounts are created by ZenMoney itself.
@@ -191,7 +253,11 @@ These are also sent to the agent as server instructions.
 - Currency conversions in reports use current exchange rates, not historical ones.
 - Zerro's envelope budget rollover is not computed.
 
-## Development
+## 🇷🇺 По-русски
+
+MCP-сервер для [Дзен-мани](https://zenmoney.ru): ИИ-агент (Claude, Cursor, Codex и др.) видит счета и балансы, ищет операции, строит отчёты, ведёт бюджеты и долги, добавляет и редактирует операции. Работает локально через официальный API, токен берётся на https://zerro.app/token. Быстрая установка: вставьте агенту промпт из раздела [Install with one prompt](#-install-with-one-prompt). Есть режим только для чтения (`ZENMONEY_READ_ONLY=true`).
+
+## 🛠️ Development
 
 ```sh
 git clone https://github.com/krax1337/mcp-server-zenmoney && cd mcp-server-zenmoney
@@ -203,7 +269,8 @@ node dist/index.js  # run the local build
 
 Releases: bump `version` in `package.json` and `server.json`, then push a `vX.Y.Z` tag. The Publish workflow tests, publishes to npm via Trusted Publishing (no token, with provenance) and to the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.krax1337/mcp-server-zenmoney`.
 
-Source layout:
+<details>
+<summary>Source layout</summary>
 
 - `src/index.ts` — entry point, stdio and HTTP transports
 - `src/config.ts` — environment variables and CLI flags
@@ -212,6 +279,8 @@ Source layout:
 - `src/tools/` — MCP tools (`read.ts`, `write.ts`, shared schemas and context)
 - `src/zenmoney/` — API client (`api.ts`), sync store and cache (`store.ts`), ledger semantics (`ledger.ts`), analytics (`analytics.ts`), write builders (`writes.ts`), dates and types
 
+</details>
+
 ## License
 
-MIT
+MIT. If this saves you time, a ⭐ helps others find it.
