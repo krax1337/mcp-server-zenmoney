@@ -3,11 +3,25 @@ updates:
   - package-ecosystem: npm
     directory: /
     schedule:
-      interval: daily
+      interval: monthly
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
     groups:
-      dev-dependencies:
-        dependency-type: development
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
-      interval: daily
+      interval: monthly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
