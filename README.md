@@ -267,7 +267,7 @@ npm test            # vitest; offline, against an in-repo fake ZenMoney server i
 node dist/index.js  # run the local build
 ```
 
-Releases: bump `version` in `package.json` and `server.json`, then push a `vX.Y.Z` tag. The Publish workflow tests, publishes to npm via Trusted Publishing (no token, with provenance) and to the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.krax1337/mcp-server-zenmoney`.
+Releases: bump `version` in `package.json` and `server.json`, then push a `vX.Y.Z` tag. The Publish workflow tests the code and stages the version on npm via Trusted Publishing (no token, with provenance). A maintainer approves it with 2FA on npmjs.com (Staged Packages tab), then runs the Publish workflow manually (`gh workflow run publish.yml`), which sees the version live and publishes it to the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.krax1337/mcp-server-zenmoney`.
 
 <details>
 <summary>Source layout</summary>

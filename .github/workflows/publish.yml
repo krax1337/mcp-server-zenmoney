@@ -1,9 +1,10 @@
 name: Publish
 
-# Push a tag like v1.0.0 (matching package.json and server.json versions) to release to npm
-# and the official MCP Registry. npm auth uses Trusted Publishing (OIDC): no token secret.
-# Run manually (workflow_dispatch) to (re)publish the current version to the MCP Registry;
-# an already published npm version is skipped.
+# Push a tag like v1.0.0 (matching package.json and server.json versions) to release.
+# npm uses staged publishing over Trusted Publishing (OIDC, no token secret): this workflow
+# stages the version, a maintainer approves it on npmjs.com (Staged Packages tab) with 2FA,
+# then a manual run (workflow_dispatch) sees the version live, skips npm and publishes it to
+# the official MCP Registry.
 on:
   push:
     tags: ["v*"]
@@ -25,6 +26,8 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+      - name: Ensure npm supports staged publishing
+        run: npm install -g npm@^11.15.0 && npm --version
       - run: npm ci
       - name: Check versions
         id: version
@@ -38,11 +41,16 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
       - run: npm run typecheck
       - run: npm test
-      - name: Publish to npm
+      - name: Stage on npm
         if: steps.version.outputs.published != 'true'
-        run: npm publish --provenance --access public
+        run: |
+          npm stage publish --provenance
+          echo "Staged mcp-server-zenmoney. Approve it at https://www.npmjs.com/package/mcp-server-zenmoney (Staged Packages), then run this workflow manually to publish to the MCP Registry." >> "$GITHUB_STEP_SUMMARY"
       - name: Install mcp-publisher
+        if: steps.version.outputs.published == 'true'
         run: |
           curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-      - run: ./mcp-publisher login github-oidc
-      - run: ./mcp-publisher publish
+      - if: steps.version.outputs.published == 'true'
+        run: ./mcp-publisher login github-oidc
+      - if: steps.version.outputs.published == 'true'
+        run: ./mcp-publisher publish
